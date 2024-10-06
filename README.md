@@ -69,3 +69,14 @@ Combination of `cloudfront:setup` and `cloudfront:build:deploy` commands with or
 ### `serverless:remove`
 
 Remove an entire stack configured in `serverless.yml` via CloudFormation.
+
+# Task 2
+
+## Manual deployment
+
+S3-website URL: http://pavel-sidorenko-bucket.s3-website-us-east-1.amazonaws.com/
+CloudFront URL: https://d32bio057nma8l.cloudfront.net
+
+## AWS CDK construct automated deployment
+
+CloudFront URL: https://d2av71wwmf68v7.cloudfront.net

@@ -11,9 +11,10 @@ const headers = {
 };
 
 export async function handler(
-  _event: APIGatewayProxyEvent
+  event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> {
   try {
+    console.log("[getProductsList] event:", JSON.stringify(event));
     const productsCommand = new ScanCommand({
       TableName: productsTableName,
     });
@@ -26,6 +27,9 @@ export async function handler(
       dynamoDB.send(stockCommand),
     ]);
 
+    console.log("[getProductsList] products:", JSON.stringify(productsResult));
+    console.log("[getProductsList] stock:", JSON.stringify(stockResult));
+
     const products = productsResult.Items?.map((product) => ({
       id: product.id.S,
       count:
@@ -36,13 +40,15 @@ export async function handler(
       description: product.description.S,
     }));
 
+    console.log("[getProductsList] response:", JSON.stringify(products));
+
     return {
       body: JSON.stringify(products),
       statusCode: 200,
       headers,
     };
   } catch (e) {
-    console.error("[getProductsList]", e);
+    console.error("[getProductsList] error:", e);
 
     return {
       body: JSON.stringify({

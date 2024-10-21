@@ -17,6 +17,7 @@ export async function handler(
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> {
   try {
+    console.log("[createProduct] event:", JSON.stringify(event));
     const body = event.body ? JSON.parse(event.body) : {};
     const validationResult = ProductSchema.safeParse(body);
 
@@ -53,6 +54,8 @@ export async function handler(
       }),
     });
 
+    console.log("[createProduct] product:", JSON.stringify(product));
+
     await Promise.all([dynamoDB.send(putProduct), dynamoDB.send(putStock)]);
 
     return {
@@ -61,7 +64,7 @@ export async function handler(
       headers,
     };
   } catch (e) {
-    console.error("[createProduct]", e);
+    console.error("[createProduct] error:", e);
 
     return {
       body: JSON.stringify({

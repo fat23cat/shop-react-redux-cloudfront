@@ -16,6 +16,7 @@ export async function handler(
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> {
   try {
+    console.log("[getProductById] event:", JSON.stringify(event));
     const { productId } = event.pathParameters || {};
 
     if (!productId) {
@@ -37,6 +38,8 @@ export async function handler(
 
     const productResponse = await docClient.send(getProductCommand);
 
+    console.log("[getProductById] product:", JSON.stringify(productResponse));
+
     if (productResponse.Item) {
       const getStockCommand = new GetCommand({
         TableName: stockTableName,
@@ -45,6 +48,8 @@ export async function handler(
         },
       });
       const stockResponse = await docClient.send(getStockCommand);
+
+      console.log("[getProductById] stock:", JSON.stringify(stockResponse));
 
       return {
         body: JSON.stringify({
@@ -64,7 +69,7 @@ export async function handler(
       };
     }
   } catch (e) {
-    console.error("[getProductById]", e);
+    console.error("[getProductById] error:", e);
 
     return {
       body: JSON.stringify({

@@ -1,5 +1,11 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { data } from "./data";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
+
+const dynamoDB = new DynamoDBClient({ region: process.env.AWS_REGION });
+const docClient = DynamoDBDocumentClient.from(dynamoDB);
+const productsTableName = process.env.PRODUCTS_TABLE_NAME || "";
+const stockTableName = process.env.STOCK_TABLE_NAME || "";
 
 const headers = {
   "Content-Type": "application/json",
@@ -11,22 +17,55 @@ export async function handler(
 ): Promise<APIGatewayProxyResult> {
   try {
     const { productId } = event.pathParameters || {};
-    const product = data.find((d) => d.id === productId);
-    return product
-      ? {
-          body: JSON.stringify(product),
-          statusCode: 200,
-          headers,
-        }
-      : {
-          body: JSON.stringify({
-            message: `Product id "${productId}" was not found`,
-          }),
-          statusCode: 404,
-          headers,
-        };
+
+    if (!productId) {
+      return {
+        body: JSON.stringify({
+          message: "Product id was not provided",
+        }),
+        statusCode: 400,
+        headers,
+      };
+    }
+
+    const getProductCommand = new GetCommand({
+      TableName: productsTableName,
+      Key: {
+        id: productId,
+      },
+    });
+
+    const productResponse = await docClient.send(getProductCommand);
+
+    if (productResponse.Item) {
+      const getStockCommand = new GetCommand({
+        TableName: stockTableName,
+        Key: {
+          productId,
+        },
+      });
+      const stockResponse = await docClient.send(getStockCommand);
+
+      return {
+        body: JSON.stringify({
+          ...productResponse.Item,
+          count: stockResponse.Item?.count || 0,
+        }),
+        statusCode: 200,
+        headers,
+      };
+    } else {
+      return {
+        body: JSON.stringify({
+          message: `Product id "${productId}" was not found`,
+        }),
+        statusCode: 404,
+        headers,
+      };
+    }
   } catch (e) {
     console.error("[getProductById]", e);
+
     return {
       body: JSON.stringify({
         message: "Internal Server Error",

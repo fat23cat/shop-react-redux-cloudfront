@@ -1,7 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { randomUUID } from "crypto";
-import { ProductSchema } from "./validation";
+import { NewProductSchema } from "./validationSchema";
 import { marshall } from "@aws-sdk/util-dynamodb";
 
 const dynamoDB = new DynamoDBClient({ region: process.env.AWS_REGION });
@@ -19,7 +19,7 @@ export async function handler(
   try {
     console.log("[createProduct] event:", JSON.stringify(event));
     const body = event.body ? JSON.parse(event.body) : {};
-    const validationResult = ProductSchema.safeParse(body);
+    const validationResult = NewProductSchema.safeParse(body);
 
     if (!validationResult.success) {
       return {

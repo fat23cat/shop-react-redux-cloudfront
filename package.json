@@ -23,7 +23,7 @@
     "cloudfront:update:build:deploy": "npm run cloudfront:setup && npm run cloudfront:build:deploy",
     "cloudfront:update:build:deploy:nc": "npm run cloudfront:setup && npm run cloudfront:build:deploy:nc",
     "serverless:remove": "sls remove",
-    "build-and-deploy": "npm run build && pushd infra && npx cdk bootstrap aws://337909757637/us-east-1 && npx cdk deploy && popd"
+    "build-and-deploy": "npm run build && pushd infra && npm run build && npx cdk bootstrap aws://337909757637/us-east-1 && npx cdk deploy --all && popd"
   },
   "dependencies": {
     "@emotion/react": "^11.9.3",

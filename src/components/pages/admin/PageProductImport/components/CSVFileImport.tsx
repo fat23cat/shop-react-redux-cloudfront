@@ -24,7 +24,7 @@ export default function CSVFileImport({ url, title }: CSVFileImportProps) {
   };
 
   const uploadFile = async () => {
-    console.log("uploadFile to", url);
+    console.log("uploadFile to: ", url);
     const fileName = file?.name || "";
     const response = await axios({
       method: "GET",

@@ -18,13 +18,13 @@ export async function handler(
 
     if (!name) {
       return {
-        body: JSON.stringify({ message: "File is missing" }),
+        body: JSON.stringify({ message: "File name is missing" }),
         statusCode: 400,
         headers,
       };
     }
 
-    if (!name.endsWith("csv")) {
+    if (!name.endsWith(".csv")) {
       return {
         body: JSON.stringify({
           message: "Wrong file extension, only .csv is supported",

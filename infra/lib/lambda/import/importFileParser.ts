@@ -12,7 +12,7 @@ export async function handler(event: S3Event): Promise<void> {
       const bucket = record.s3.bucket.name;
       const key = record.s3.object.key;
 
-      if (!key.endsWith("csv")) {
+      if (!key.endsWith(".csv")) {
         console.error("Wrong file extension, only .csv is supported");
         continue;
       }

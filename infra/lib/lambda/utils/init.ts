@@ -1,4 +1,3 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { data } from "./data";
 import {
   DynamoDBClient,
@@ -11,14 +10,14 @@ const dynamoDB = new DynamoDBClient({ region: process.env.AWS_REGION });
 const productsTableName = process.env.PRODUCTS_TABLE_NAME || "";
 const stockTableName = process.env.STOCK_TABLE_NAME || "";
 
-export async function handler(
-  _event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> {
+export async function handler(): Promise<void> {
   try {
     const items = data.map((item) => ({
       ...item,
       id: randomUUID(),
     }));
+
+    console.log("Tables data:", items);
 
     const batchWriteProducts = new BatchWriteItemCommand({
       RequestItems: {
@@ -49,19 +48,7 @@ export async function handler(
     ]);
 
     console.log("Tables data inserted successfully");
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        message: "Tables data inserted successfully",
-      }),
-    };
   } catch (error) {
     console.error("Error inserting tables data: ", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        message: "Internal Server Error",
-      }),
-    };
   }
 }

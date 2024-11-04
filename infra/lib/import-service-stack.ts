@@ -12,9 +12,14 @@ import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import { Construct } from "constructs";
 import path = require("path");
+import { ProductsSQSStack } from "./products-sqs-stack";
+
+interface ImportServiceStackProps extends StackProps {
+  productsSQSStack: ProductsSQSStack;
+}
 
 export class ImportServiceStack extends Stack {
-  constructor(scope: Construct, id: string, props?: StackProps) {
+  constructor(scope: Construct, id: string, props: ImportServiceStackProps) {
     super(scope, id);
 
     const importBucket = new aws_s3.Bucket(this, "ImportServiceBucket", {
@@ -63,7 +68,7 @@ export class ImportServiceStack extends Stack {
       {
         runtime: lambda.Runtime.NODEJS_20_X,
         memorySize: 128,
-        timeout: Duration.seconds(5),
+        timeout: Duration.seconds(30),
         handler: "importProductsFile.handler",
         code: lambda.Code.fromAsset(path.join(__dirname, "./lambda/import")),
         environment: {
@@ -82,11 +87,15 @@ export class ImportServiceStack extends Stack {
       {
         runtime: lambda.Runtime.NODEJS_20_X,
         memorySize: 128,
-        timeout: Duration.seconds(5),
+        timeout: Duration.seconds(30),
         handler: "importFileParser.handler",
         code: lambda.Code.fromAsset(path.join(__dirname, "./lambda/import")),
+        environment: {
+          QUEUE_URL: props.productsSQSStack.sqs.queueUrl,
+        },
       }
     );
+    props.productsSQSStack.sqs.grantSendMessages(importFileParserLambda);
     importBucket.grantReadWrite(importFileParserLambda);
     importBucket.addEventNotification(
       aws_s3.EventType.OBJECT_CREATED,

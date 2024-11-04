@@ -1,8 +1,10 @@
 import { S3Event } from "aws-lambda";
-import { S3 } from "aws-sdk";
+import { S3, SQS } from "aws-sdk";
 import * as csv from "csv-parser";
 
 const s3 = new S3({ region: process.env.AWS_REGION });
+const sqs = new SQS({ region: process.env.AWS_REGION });
+const queueUrl = process.env.QUEUE_URL || "";
 
 export async function handler(event: S3Event): Promise<void> {
   try {
@@ -26,20 +28,19 @@ export async function handler(event: S3Event): Promise<void> {
         })
         .createReadStream();
 
-      const result: Record<string, string>[] = [];
+      const messages: Record<string, string>[] = [];
 
       await new Promise((resolve, reject) => {
         s3Stream
           .pipe(csv())
           .on("data", (data: Record<string, string>) => {
-            console.log("Parsed CSV record:", JSON.stringify(data));
-            result.push(data);
+            messages.push(data);
           })
           .on("error", (e) => reject(e))
           .on("end", resolve);
       });
 
-      console.log("Result:", result);
+      await sendMessagesInBatch(messages);
 
       const newKey = key.replace("uploaded/", "parsed/");
       await s3
@@ -62,4 +63,30 @@ export async function handler(event: S3Event): Promise<void> {
   } catch (e) {
     console.error("[importFileParser] error:", e);
   }
+}
+
+async function sendMessagesInBatch(messages: Record<string, string>[]) {
+  const batchSize = 10;
+  const batches = [];
+
+  for (let i = 0; i < messages.length; i += batchSize) {
+    const batch = messages.slice(i, i + batchSize);
+    const entries = batch.map((message, index) => ({
+      Id: `message-${Date.now()}-${i + index}`,
+      MessageBody: JSON.stringify(message),
+    }));
+
+    console.log("entries", entries);
+
+    batches.push(
+      sqs
+        .sendMessageBatch({
+          QueueUrl: queueUrl,
+          Entries: entries,
+        })
+        .promise()
+    );
+  }
+
+  return Promise.all(batches);
 }

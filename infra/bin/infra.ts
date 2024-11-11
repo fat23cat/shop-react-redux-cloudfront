@@ -10,7 +10,7 @@ import { ProductsSQSStack } from "../lib/products-sqs-stack";
 import { ProductsSNSStack } from "../lib/products-sns-stack";
 
 const app = new cdk.App();
-new DeployWebAppStack(app, "DeployWebAppStack", {});
+new DeployWebAppStack(app, "DeployWebAppStack");
 const productsSQSStack = new ProductsSQSStack(app, "ProductsSQSStack");
 const productsSNSStack = new ProductsSNSStack(app, "ProductsSNSStack");
 const productsApiStack = new ProductsApiStack(app, "ProductsApiStack");

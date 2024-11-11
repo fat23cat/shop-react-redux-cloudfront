@@ -32,7 +32,7 @@ export class ProductsDBStack extends cdk.Stack {
     const initDataLambda = new lambda.Function(this, "init", {
       runtime: lambda.Runtime.NODEJS_20_X,
       memorySize: 128,
-      timeout: cdk.Duration.seconds(5),
+      timeout: cdk.Duration.seconds(30),
       handler: "init.handler",
       code: lambda.Code.fromAsset(path.join(__dirname, "./lambda/utils")),
       environment: {

@@ -13,6 +13,9 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import { Construct } from "constructs";
 import path = require("path");
 import { ProductsSQSStack } from "./products-sqs-stack";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 interface ImportServiceStackProps extends StackProps {
   productsSQSStack: ProductsSQSStack;
@@ -61,6 +64,30 @@ export class ImportServiceStack extends Stack {
       },
     });
 
+    const basicAuthorizerLambda = new lambda.Function(this, "basicAuthorizer", {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      memorySize: 128,
+      timeout: Duration.seconds(30),
+      handler: "basicAuthorizer.handler",
+      code: lambda.Code.fromAsset(
+        path.join(__dirname, "./lambda/authorization")
+      ),
+      environment: {
+        USERNAME: process.env.USERNAME || "",
+        PASSWORD: process.env.PASSWORD || "",
+      },
+    });
+
+    const authorizer = new apigateway.TokenAuthorizer(
+      this,
+      "ImportAuthorizer",
+      {
+        handler: basicAuthorizerLambda,
+        identitySource: apigateway.IdentitySource.header("Authorization"),
+        resultsCacheTtl: Duration.seconds(0),
+      }
+    );
+
     const importResource = api.root.addResource("import");
     const importProductsFileLambda = new lambda.Function(
       this,
@@ -79,7 +106,10 @@ export class ImportServiceStack extends Stack {
     importBucket.grantPut(importProductsFileLambda);
     const importProductsFileLambdaIntegration =
       new apigateway.LambdaIntegration(importProductsFileLambda);
-    importResource.addMethod("GET", importProductsFileLambdaIntegration);
+    importResource.addMethod("GET", importProductsFileLambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.CUSTOM,
+    });
 
     const importFileParserLambda = new lambda.Function(
       this,
